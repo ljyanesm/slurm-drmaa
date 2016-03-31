@@ -140,7 +140,9 @@ enum slurm_native {
 	SLURM_NATIVE_NO_REQUEUE,
 	SLURM_NATIVE_EXCLUDE,
 	SLURM_NATIVE_TMP,
-	SLURM_NATIVE_DEPENDENCY
+	SLURM_NATIVE_DEPENDENCY,
+	SLURM_NATIVE_STDOUT,
+	SLURM_NATIVE_STDERR
 };
 
 void
@@ -214,7 +216,7 @@ slurmdrmaa_add_attribute(job_desc_msg_t *job_desc, unsigned attr, const char *va
 			break;
 		case SLURM_NATIVE_CPUS_PER_TASK:
 			fsd_log_debug(( "# cpus_per_task = %s", value));
-            job_desc->cpus_per_task = fsd_atoi(value);
+			job_desc->cpus_per_task = fsd_atoi(value);
 			break;
 		case SLURM_NATIVE_EXCLUSIVE:
 			fsd_log_debug(( "# exclusive -> shared = 0"));
@@ -361,6 +363,14 @@ slurmdrmaa_add_attribute(job_desc_msg_t *job_desc, unsigned attr, const char *va
 			fsd_log_debug(("# dependency = %s", value));
 			job_desc->dependency = fsd_strdup(value);
 			break;
+		case SLURM_NATIVE_STDOUT:
+			fsd_log_debug(("# stdout = %s", value));
+			job_desc->std_out = fsd_strdup(value);
+			break;
+		case SLURM_NATIVE_STDERR:
+			fsd_log_debug(("# stderr = %s", value));
+			job_desc->std_err = fsd_strdup(value);
+			break;
 		default:
 			fsd_exc_raise_fmt(FSD_DRMAA_ERRNO_INVALID_ATTRIBUTE_VALUE,"Invalid attribute");
 	}
@@ -380,12 +390,6 @@ slurmdrmaa_parse_additional_attr(job_desc_msg_t *job_desc,const char *add_attr)
 	  {
 		name = fsd_strdup(strtok_r(add_attr_copy, "=", &ctxt));
 		value = strtok_r(NULL, "=", &ctxt);
-		/*
-		 * TODO: move it to slurmdrmaa_add_attribute
-		 if (value == NULL) {
-			fsd_exc_raise_fmt(FSD_DRMAA_ERRNO_INVALID_ATTRIBUTE_VALUE, 
-				"Invalid native specification: %s Missing '='.", add_attr_copy);
-		} */
 
 		if(strcmp(name,"account") == 0) {
 			slurmdrmaa_add_attribute(job_desc,SLURM_NATIVE_ACCOUNT,value);
@@ -554,7 +558,13 @@ slurmdrmaa_parse_native(job_desc_msg_t *job_desc, const char * value)
 						break;
 					case 'L' :
 						slurmdrmaa_add_attribute(job_desc,SLURM_NATIVE_LICENSES, arg);
-						break;							
+						break;
+					case 'o':
+						slurmdrmaa_add_attribute(job_desc,SLURM_NATIVE_STDOUT, arg);
+						break;
+					case 'e':
+						slurmdrmaa_add_attribute(job_desc,SLURM_NATIVE_STDERR, arg);
+						break;
 					default :
 							fsd_exc_raise_fmt(FSD_DRMAA_ERRNO_INVALID_ATTRIBUTE_VALUE,
 									"Invalid native specification: %s (Unsupported option: -%c)",
