@@ -8,7 +8,6 @@ config.h
 config.h.in
 std.out
 autom4te.cache
-drmaa_utils
 libtool
 aclocal.m4
 Makefile
